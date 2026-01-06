@@ -263,7 +263,6 @@ body{
   }
 }
 
-
 /* ================= ADMIN STATUS DROPDOWN ================= */
 
 .status-row {
@@ -277,41 +276,48 @@ body{
   font-weight: 600;
   min-width: 70px;
 }
+/* ===== ADMIN STATUS DROPDOWN FIX ===== */
 
 .status-select {
+  min-width: 220px;
+  height: 46px;
   padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  font-size: 16px;        /* BIG TEXT */
   font-weight: 600;
+  border-radius: 10px;
+  background-color: #fff;
   cursor: pointer;
-  background: white;
-  min-width: 160px;
-  transition: all 0.2s ease;
 }
 
-/* Color based on status */
+/* IMPORTANT: option styling */
+.status-select option {
+  font-size: 32px;        /* FIXES SMALL TEXT */
+  padding: 10px;          /* FIXES CROWDING */
+}
+
+/* Status colors */
 .status-pending {
-  border-color: #ef4444;
+  border: 2px solid #ef4444;
   color: #ef4444;
 }
 
 .status-processing {
-  border-color: #f59e0b;
+  border: 2px solid #f59e0b;
   color: #f59e0b;
 }
 
 .status-resolved {
-  border-color: #22c55e;
+  border: 2px solid #22c55e;
   color: #22c55e;
 }
 
 .status-rejected {
-  border-color: #6b7280;
+  border: 2px solid #6b7280;
   color: #6b7280;
 }
 
+/* Focus */
 .status-select:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
-

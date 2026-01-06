@@ -10,7 +10,6 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./App.css";
-
 import { db } from "./firebase";
 import {
   collection,
@@ -21,7 +20,9 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  orderBy   // ✅ ADD THIS (make sure it is added only once)
 } from "firebase/firestore";
+
 
 function LocationPicker({ setCoords }) {
   useMapEvents({
@@ -100,10 +101,29 @@ export default function App() {
     }));
     setGrievances(list);
   });
-
-  return () => unsubscribe();
+ return () => unsubscribe();
 }, [user]);
 
+
+ useEffect(() => {
+  if (!isAdmin) return;
+
+  const q = query(
+    collection(db, "grievances"),
+    orderBy("createdAt", "desc") // latest first
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setAllGrievances(
+      snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+    );
+  });
+
+  return () => unsubscribe();
+}, [isAdmin]);
 
    const login = async () => {
   if (!email || !password) {
@@ -285,6 +305,12 @@ function AdminDashboard({ grievances }) {
         <div key={g.id} style={{ borderBottom: "1px solid #eee", padding: 10 }}>
           <p><b>Issue:</b> {g.problem}</p>
           <p><b>City:</b> {g.city}</p>
+          <p style={{ fontSize: 13, color: "#64748b" }}>
+      <b>Submitted:</b>{" "}
+      {g.createdAt?.toDate
+        ? g.createdAt.toDate().toLocaleString()
+        : "Just now"}
+    </p>
           {g.latitude && g.longitude && (
             <p>
               <b>📍 Location:</b> {g.latitude}, {g.longitude}
@@ -321,24 +347,11 @@ function AdminDashboard({ grievances }) {
 </div>
 
         </div>
+        
       ))}
     </div>
   );
 }
-
-useEffect(() => {
-  if (!isAdmin) return;
-
-  const q = query(collection(db, "grievances"));
-
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    setAllGrievances(
-      snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    );
-  });
-
-  return () => unsubscribe();
-}, [isAdmin]);
 
 
    // ================= LOGIN UI =================
