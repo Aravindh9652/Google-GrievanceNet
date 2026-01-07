@@ -23,6 +23,7 @@ import {
   orderBy   // ✅ ADD THIS (make sure it is added only once)
 } from "firebase/firestore";
 
+const BACKEND_URL = "https://grievance-backend1-qzuk.onrender.com";
 
 function LocationPicker({ setCoords }) {
   useMapEvents({
@@ -215,11 +216,11 @@ const register = async () => {
     setAiData(null);
 
     try {
-      const res = await fetch("http://localhost:5000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: problem, location: city }),
-      });
+      const res = await fetch(`${BACKEND_URL}/chat`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ message: problem, location: city }),
+});
 
       const data = await res.json();
       setAiData(data);
@@ -253,10 +254,11 @@ const register = async () => {
     formData.append("longitude", coords?.lng || "");
     if (image) formData.append("image", image);
 
-    const res = await fetch("http://localhost:5000/send-email", {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(`${BACKEND_URL}/send-email`, {
+  method: "POST",
+  body: formData,
+});
+
 
     const data = await res.json();
 
