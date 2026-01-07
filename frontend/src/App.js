@@ -40,7 +40,7 @@ export default function App() {
   const [page, setPage] = useState(1);
 
   const [problem, setProblem] = useState("");
-  const [city, setCity] = useState("Vijayawada");
+ const [city, setCity] = useState("");
   const [aiData, setAiData] = useState(null);
   const [loading, setLoading] = useState(false);
 
