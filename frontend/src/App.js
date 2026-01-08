@@ -64,7 +64,7 @@ export default function App() {
   const [grievances, setGrievances] = useState([]);
   const [allGrievances, setAllGrievances] = useState([]);
 
-  const ADMIN_EMAILS = ["admin@grievancenet.com"];
+  const ADMIN_EMAILS = [""];
 
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -294,60 +294,91 @@ function AdminDashboard({ grievances }) {
     await updateDoc(doc(db, "grievances", id), {
       status: newStatus,
     });
-    alert("Status updated");
+    alert("✅ Status updated successfully");
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case "Resolved": return "✅";
+      case "In Progress": return "⚙️";
+      case "Rejected": return "❌";
+      default: return "⏳";
+    }
   };
 
   return (
     <div className="card">
       <h2>🛠 Admin Grievance Panel</h2>
+      <p className="muted" style={{ marginBottom: 20 }}>Manage and track all grievances submitted by users</p>
+
+      {grievances.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <p style={{ fontSize: '3rem', marginBottom: 10 }}>📭</p>
+          <p className="muted">No grievances submitted yet</p>
+        </div>
+      )}
 
       {grievances.map((g) => (
-        <div key={g.id} style={{ borderBottom: "1px solid #eee", padding: 10 }}>
-          <p><b>Issue:</b> {g.problem}</p>
-          <p><b>City:</b> {g.city}</p>
-          <p style={{ fontSize: 13, color: "#64748b" }}>
-      <b>Submitted:</b>{" "}
-      {g.createdAt?.toDate
-        ? g.createdAt.toDate().toLocaleString()
-        : "Just now"}
-    </p>
+        <div key={g.id} className="grievance-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>
+                <span style={{ marginRight: 8 }}>📋</span>
+                {g.problem}
+              </p>
+            </div>
+            <span style={{ fontSize: '1.5rem', marginLeft: 12 }}>
+              {getStatusIcon(g.status)}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 12 }}>
+            <p><strong>🏙 City:</strong> {g.city}</p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              <strong>📅 Submitted:</strong>{" "}
+              {g.createdAt?.toDate
+                ? g.createdAt.toDate().toLocaleString('en-US', { 
+                    dateStyle: 'medium', 
+                    timeStyle: 'short' 
+                  })
+                : "Just now"}
+            </p>
+          </div>
+
           {g.latitude && g.longitude && (
-            <p>
-              <b>📍 Location:</b> {g.latitude}, {g.longitude}
+            <p style={{ fontSize: '0.9rem' }}>
+              <strong>📍 Coordinates:</strong> {parseFloat(g.latitude).toFixed(4)}, {parseFloat(g.longitude).toFixed(4)}
             </p>
           )}
 
-            {g.detailedLocation && (
-              <p>
-                <b>🏷 Landmark:</b> {g.detailedLocation}
-              </p>
-            )}
+          {g.detailedLocation && (
+            <p style={{ fontSize: '0.9rem' }}>
+              <strong>🏷 Landmark:</strong> {g.detailedLocation}
+            </p>
+          )}
 
-          <div className="status-row">
-  <span className="status-label">Status:</span>
-
-  <select
-    className={`status-select ${
-      g.status === "Resolved"
-        ? "status-resolved"
-        : g.status === "In Progress"
-        ? "status-processing"
-        : g.status === "Rejected"
-        ? "status-rejected"
-        : "status-pending"
-    }`}
-    value={g.status}
-    onChange={(e) => updateStatus(g.id, e.target.value)}
-  >
-    <option value="Pending">Pending</option>
-    <option value="In Progress">In Progress</option>
-    <option value="Resolved">Resolved</option>
-    <option value="Rejected">Rejected</option>
-  </select>
-</div>
-
+          <div className="status-row" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color)' }}>
+            <span className="status-label">Status:</span>
+            <select
+              className={`status-select ${
+                g.status === "Resolved"
+                  ? "status-resolved"
+                  : g.status === "In Progress"
+                  ? "status-processing"
+                  : g.status === "Rejected"
+                  ? "status-rejected"
+                  : "status-pending"
+              }`}
+              value={g.status}
+              onChange={(e) => updateStatus(g.id, e.target.value)}
+            >
+              <option value="Pending">⏳ Pending</option>
+              <option value="In Progress">⚙️ In Progress</option>
+              <option value="Resolved">✅ Resolved</option>
+              <option value="Rejected">❌ Rejected</option>
+            </select>
+          </div>
         </div>
-        
       ))}
     </div>
   );
@@ -357,153 +388,130 @@ function AdminDashboard({ grievances }) {
    // ================= LOGIN UI =================
   if (!user) {
   return (
-    <div style={{ maxWidth: 420, margin: "80px auto" }} className="card">
-      {authMode === "login" && (
-        <>
-          <h2 style={{ textAlign: "center" }}>🔐 GrievanceNet Login</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        {authMode === "login" && (
+          <>
+            <h2>🔐 Welcome Back</h2>
+            <p className="muted text-center mb-lg">Sign in to manage your grievances</p>
 
-          <input
-            className="input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            <input
+              className="input"
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && login()}
+            />
 
-          <br /><br />
+            <br /><br />
 
-          <div style={{ position: "relative" }}>
-          <input
-            className="input"
-            type={showLoginPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                type={showLoginPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && login()}
+              />
 
-          <span
-            onClick={() => setShowLoginPassword(!showLoginPassword)}
-            style={{
-              position: "absolute",
-              right: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              fontSize: 18,
-              color: "#64748b",
-            }}
-          >
-            {showLoginPassword ? "🙈" : "👁️"}
-          </span>
-        </div>
+              <span
+                className="password-toggle"
+                onClick={() => setShowLoginPassword(!showLoginPassword)}
+              >
+                {showLoginPassword ? "🙈" : "👁️"}
+              </span>
+            </div>
 
 
-          <br /><br />
+            <br /><br />
 
-          <button className="btn primary" onClick={login} style={{ width: "100%" }}>
-            Login
-          </button>
+            <button className="btn primary" onClick={login} style={{ width: "100%" }}>
+              <span>🚀 Login</span>
+            </button>
 
-          <p style={{ textAlign: "center", marginTop: 12 }}>
-            New user?{" "}
-            <span
-              style={{ color: "#5b21b6", cursor: "pointer", fontWeight: 600 }}
-              onClick={() => setAuthMode("register")}
-            >
-              Register here
-            </span>
-          </p>
-        </>
-      )}
+            <p className="text-center mt-md">
+              New user?{" "}
+              <span className="auth-link" onClick={() => setAuthMode("register")}>
+                Register here
+              </span>
+            </p>
+          </>
+        )}
 
-      {authMode === "register" && (
-        <>
-          <h2 style={{ textAlign: "center" }}>📝 Register</h2>
+        {authMode === "register" && (
+          <>
+            <h2>📝 Create Account</h2>
+            <p className="muted text-center mb-lg">Join us to report and track grievances</p>
 
-          <input
-            className="input"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+            <input
+              className="input"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-          <br /><br />
+            <br /><br />
 
-          <input
-            className="input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+            <input
+              className="input"
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
 
-          <br /><br />
+            <br /><br />
 
-          <input
-            className="input"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+            <input
+              className="input"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
 
-          <br /><br />
+            <br /><br />
 
-         <div style={{ position: "relative" }}>
-          <input
-            className="input"
-            type={showRegisterPassword ? "text" : "password"}
-            placeholder="Password (min 6 chars)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                type={showRegisterPassword ? "text" : "password"}
+                placeholder="Password (min 6 chars)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && register()}
+              />
 
-          <span
-            onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-            style={{
-              position: "absolute",
-              right: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              fontSize: 18,
-              color: "#64748b",
-            }}
-          >
-            {showRegisterPassword ? "🙈" : "👁️"}
-          </span>
-        </div>
+              <span
+                className="password-toggle"
+                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+              >
+                {showRegisterPassword ? "🙈" : "👁️"}
+              </span>
+            </div>
 
+            <br /><br />
 
-          <br /><br />
+            <button className="btn primary" onClick={register} style={{ width: "100%" }}>
+              <span>✨ Create Account</span>
+            </button>
 
-          <button className="btn primary" onClick={register} style={{ width: "100%" }}>
-            Register
-          </button>
+            <p className="text-center mt-md">
+              Already registered?{" "}
+              <span className="auth-link" onClick={() => setAuthMode("login")}>
+                Login
+              </span>
+            </p>
+          </>
+        )}
 
-          <p style={{ textAlign: "center", marginTop: 12 }}>
-            Already registered?{" "}
-            <span
-              style={{ color: "#5b21b6", cursor: "pointer", fontWeight: 600 }}
-              onClick={() => setAuthMode("login")}
-            >
-              Login
-            </span>
-          </p>
-        </>
-      )}
-
-      {authError && (
-        <p
-          style={{
-            marginTop: 12,
-            textAlign: "center",
-            color: authError.includes("successfully") ? "green" : "red",
-            fontWeight: 600,
-          }}
-        >
-          {authError}
-        </p>
-      )}
+        {authError && (
+          <div className={`auth-error ${authError.includes("successfully") ? "success" : "error"}`}>
+            {authError}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -514,8 +522,13 @@ if (isAdmin) {
   return (
     <div className="app-container">
       <header className="hero">
-        <h1>🛡 GrievanceNet Admin Panel</h1>
-        <button className="btn ghost" onClick={logout}>Logout</button>
+        <div className="hero-inner">
+          <h1>🛡 Admin Control Panel</h1>
+          <p className="tagline">Monitor and manage all submitted grievances</p>
+        </div>
+        <button className="btn ghost" onClick={logout}>
+          <span>🚪 Logout</span>
+        </button>
       </header>
 
       <AdminDashboard grievances={allGrievances} />
@@ -530,43 +543,39 @@ if (isAdmin) {
       <header className="hero">
         <div className="hero-inner">
           <h1>📢 AI Grievance Assistant</h1>
-          <p className="tagline">Report civic issues in plain language — AI helps route and draft clear grievance mails.</p>
+          <p className="tagline">Report civic issues in plain language — AI helps you draft and submit clear grievance requests efficiently.</p>
         </div>
-         <button
-          className="btn ghost"
-          style={{ marginLeft: "auto" }}
-          onClick={logout}
-        >
-          Logout
+        <button className="btn ghost" onClick={logout}>
+          <span>🚪 Logout</span>
         </button>
       </header>
 
       <main className="content">
         <div className="card">
           {page === 0 && (
-  <div className="form">
-    <h2>👋 Welcome to GrievanceNet</h2>
-    <p className="muted">
-      Track your submitted complaints or raise a new grievance.
-    </p>
+            <div className="form">
+              <h2>👋 Welcome to GrievanceNet</h2>
+              <p className="muted" style={{ fontSize: '1rem', lineHeight: 1.6, marginTop: 12 }}>
+                Your voice matters. Track your submitted complaints or raise a new grievance to make your community better.
+              </p>
 
-    <div className="actions" style={{ marginTop: 20 }}>
-      <button
-        className="btn primary"
-        onClick={() => setPage(3)}
-      >
-        📊 View My Complaints
-      </button>
+              <div className="actions" style={{ marginTop: 30 }}>
+                <button className="btn primary" onClick={() => setPage(3)} style={{ flex: 1 }}>
+                  <span>📊 View My Complaints</span>
+                </button>
 
-      <button
-        className="btn secondary"
-        onClick={() => setPage(1)}
-      >
-        ➕ Raise New Complaint
-      </button>
-    </div>
-  </div>
-)}
+                <button className="btn secondary" onClick={() => setPage(1)} style={{ flex: 1 }}>
+                  <span>➕ Raise New Complaint</span>
+                </button>
+              </div>
+
+              <div style={{ marginTop: 30, padding: 20, background: 'rgba(102, 126, 234, 0.1)', borderRadius: 'var(--border-radius-sm)', border: '1px solid rgba(102, 126, 234, 0.2)' }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  💡 <strong>Tip:</strong> Use our AI-powered assistant to automatically draft professional grievance emails based on your description.
+                </p>
+              </div>
+            </div>
+          )}
 
 
           {page === 1 && (
@@ -592,18 +601,93 @@ if (isAdmin) {
 
               <div className="actions">
                 <button className="btn primary" onClick={generateMail} disabled={loading}>
-                  {loading ? "Analyzing…" : "🤖 Analyze with Gemini"}
+                  <span>{loading ? "🔄 Analyzing…" : "🤖 Analyze with Gemini AI"}</span>
                 </button>
 
                 {aiData && (
-                  <button className="btn secondary" onClick={() => setPage(2)}>Proceed →</button>
+                  <button className="btn secondary" onClick={() => setPage(2)}>
+                    <span>Next: Add Location →</span>
+                  </button>
                 )}
               </div>
 
               {aiData && (
                 <div className="ai-preview">
-                  <h3>Draft Mail</h3>
-                  <textarea className="input textarea" rows={6} value={mailBody} readOnly />
+                  <h3>✨ AI-Generated Draft</h3>
+                  <p className="muted" style={{ marginBottom: 10 }}>Review the auto-generated grievance mail below</p>
+                  <textarea className="input textarea" rows={8} value={mailBody} readOnly />
+                  
+                  {/* AI Advice Section */}
+                  {aiData.advice && (
+                    <div style={{ 
+                      marginTop: 20, 
+                      padding: '20px 24px', 
+                      background: 'linear-gradient(135deg, rgba(67, 233, 123, 0.15), rgba(79, 172, 254, 0.1))',
+                      border: '2px solid rgba(67, 233, 123, 0.4)',
+                      borderRadius: 'var(--border-radius-sm)',
+                      boxShadow: '0 0 30px rgba(67, 233, 123, 0.3), 0 8px 20px rgba(0, 0, 0, 0.2)'
+                    }}>
+                      <h4 style={{ 
+                        margin: '0 0 16px 0', 
+                        fontSize: '1.2rem',
+                        fontWeight: 700,
+                        color: '#43e97b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        textShadow: '0 2px 10px rgba(67, 233, 123, 0.3)'
+                      }}>
+                        💡 Recommended Action Steps
+                      </h4>
+                      <div style={{ 
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.8,
+                        fontSize: '0.95rem',
+                        whiteSpace: 'pre-line'
+                      }}>
+                        {aiData.advice.split('\\n').map((line, index) => (
+                          <div key={index} style={{ 
+                            marginBottom: line.trim().match(/^\\d+\\./) ? '10px' : '4px',
+                            paddingLeft: line.trim().match(/^\\d+\\./) ? '0' : '0',
+                            color: line.trim().match(/^\\d+\\./) ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            fontWeight: line.trim().match(/^\\d+\\./) ? '600' : '400'
+                          }}>
+                            {line}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Department Info */}
+                  {aiData.department && (
+                    <div style={{ 
+                      marginTop: 16, 
+                      padding: '12px 16px',
+                      background: 'rgba(102, 126, 234, 0.1)',
+                      borderLeft: '4px solid #667eea',
+                      borderRadius: '8px'
+                    }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>📋 Department:</strong> {aiData.department}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  {aiData.summary && (
+                    <div style={{ 
+                      marginTop: 12, 
+                      padding: '12px 16px',
+                      background: 'rgba(240, 147, 251, 0.1)',
+                      borderLeft: '4px solid #f093fb',
+                      borderRadius: '8px'
+                    }}>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        <strong style={{ color: 'var(--text-primary)' }}>📝 Summary:</strong> {aiData.summary}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -611,9 +695,16 @@ if (isAdmin) {
 
           {page === 2 && (
             <div className="form">
+              <h2>📍 Location Details</h2>
+              <p className="muted mb-md">Pin your exact location for faster resolution</p>
+
               <div className="row space-between">
-                <button className="btn" onClick={getCurrentLocation}>Use Current Location</button>
-                <button className="btn ghost" onClick={() => setPage(1)}>← Back</button>
+                <button className="btn secondary" onClick={getCurrentLocation}>
+                  <span>📍 Use Current Location</span>
+                </button>
+                <button className="btn ghost" onClick={() => setPage(1)}>
+                  <span>← Back</span>
+                </button>
               </div>
 
               {coords && (
@@ -653,63 +744,104 @@ if (isAdmin) {
               <input className="input file" type="file" onChange={(e) => setImage(e.target.files[0])} />
 
               <div className="actions">
-                <button className="btn primary" onClick={sendEmail}>📤 Send Grievance Mail</button>
+                <button className="btn primary" onClick={sendEmail} style={{ width: '100%' }}>
+                  <span>📤 Submit Grievance</span>
+                </button>
               </div>
             </div>
           )}
 
 
           {page === 3 && (
-  <div className="form">
-    <h2>📊 Grievance Status</h2>
+            <div className="form">
+              <h2>📊 My Grievances</h2>
+              <p className="muted mb-lg">Track the status of all your submitted grievances</p>
 
-    {grievances.length === 0 && (
-      <p className="muted">No grievances submitted yet.</p>
-    )}
+              {grievances.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--bg-card)', borderRadius: 'var(--border-radius-sm)', border: '1px dashed var(--border-color)' }}>
+                  <p style={{ fontSize: '4rem', marginBottom: 16 }}>📝</p>
+                  <p className="muted" style={{ fontSize: '1.1rem' }}>No grievances submitted yet</p>
+                  <button className="btn primary" onClick={() => setPage(1)} style={{ marginTop: 20 }}>
+                    <span>➕ Submit Your First Grievance</span>
+                  </button>
+                </div>
+              )}
 
-    {grievances.map((g) => (
-      <div key={g.id} className="card small" style={{ marginBottom: 12 }}>
-        <p><strong>Problem:</strong> {g.problem}</p>
-        <p><strong>City:</strong> {g.city}</p>
-        <p>
-          <strong>Status:</strong>{" "}
-          <span
-            style={{
-              color:
-                g.status === "Resolved"
-                  ? "green"
-                  : g.status === "Processing"
-                  ? "orange"
-                  : "red",
-            }}
-          >
-            {g.status}
-          </span>
-        </p>
-      </div>
-    ))}
+              {grievances.map((g) => (
+                <div key={g.id} className="grievance-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 8 }}>
+                        <strong>📋 Issue:</strong> {g.problem}
+                      </p>
+                      <p style={{ marginBottom: 4 }}><strong>🏙 City:</strong> {g.city}</p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                        <strong>Status:</strong>
+                        <span
+                          style={{
+                            padding: '6px 16px',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            background:
+                              g.status === "Resolved"
+                                ? "rgba(34, 197, 94, 0.2)"
+                                : g.status === "In Progress"
+                                ? "rgba(245, 158, 11, 0.2)"
+                                : g.status === "Rejected"
+                                ? "rgba(107, 114, 128, 0.2)"
+                                : "rgba(239, 68, 68, 0.2)",
+                            color:
+                              g.status === "Resolved"
+                                ? "#22c55e"
+                                : g.status === "In Progress"
+                                ? "#f59e0b"
+                                : g.status === "Rejected"
+                                ? "#6b7280"
+                                : "#ef4444",
+                          }}
+                        >
+                          {g.status === "Resolved" && "✅"}
+                          {g.status === "In Progress" && "⚙️"}
+                          {g.status === "Rejected" && "❌"}
+                          {g.status === "Pending" && "⏳"}
+                          {" "}{g.status}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
-    <button className="btn ghost" onClick={() => setPage(0)}>
-      ← Back to Submitted Complaints
-    </button>
-  </div>
-)}
+              {grievances.length > 0 && (
+                <button className="btn ghost" onClick={() => setPage(0)} style={{ marginTop: 20, width: '100%' }}>
+                  <span>← Back to Dashboard</span>
+                </button>
+              )}
+            </div>
+          )}
 
         </div>
 
         <aside className="sidebar">
           <div className="card small">
-            <h4>Tips</h4>
-            <ul>
-              <li>Be concise and include the exact location.</li>
-              <li>Attach a photo for faster verification.</li>
-              <li>Use the map to mark the precise spot.</li>
+            <h4>💡 Quick Tips</h4>
+            <ul style={{ marginTop: 12 }}>
+              <li>✓ Be clear and concise in your description</li>
+              <li>✓ Include exact location details</li>
+              <li>✓ Attach photos for faster verification</li>
+              <li>✓ Use the map to pinpoint the spot</li>
             </ul>
           </div>
 
           <div className="card small">
-            <h4>Support</h4>
-            <p className="muted">This demo uses Gemini (free-tier) to analyze messages. No data is sent without your action.</p>
+            <h4>🤖 AI Assistant</h4>
+            <p className="muted">Powered by Google Gemini AI to help you draft professional grievance emails automatically.</p>
+          </div>
+
+          <div className="card small">
+            <h4>🔒 Privacy</h4>
+            <p className="muted">Your data is secure. Nothing is sent without your explicit action.</p>
           </div>
         </aside>
       </main>
